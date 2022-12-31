@@ -23,14 +23,18 @@ ROOT_DIR = os.path.dirname(BASE_DIR)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
+from dotenv import load_dotenv
+load_dotenv()
+secretKey = os.environ.get('SECRET_KEY')
+serverIP = os.environ.get('SERVER_IP')
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-%%%nmjzqhb6zyxj2d993-=-(e$2w#sla$)+b=&zeqhqzv2rti#"
+SECRET_KEY = secretKey
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [serverIP]
 
 
 # Application definition

@@ -39,10 +39,13 @@ with open('../DINO_model/util/20class_plant_coco_id2name.json') as f:
 
 def dino_api(request):
     if request.method == 'POST':
-        imageURL = request.body.decode()
+        # print(json.loads(request.body)['userRequest']['utterance'])
+        imageURL = json.loads(request.body)['userRequest']['utterance']
+        # imageURL = request.body.decode()
+        # print(imageURL)
         openedURL = urllib.request.urlopen(imageURL)
         with open('image.jpeg', 'wb') as f:
-            f.write(openedURL.file.read())
+            f.write(openedURL.read())
 
         image = Image.open('image.jpeg').convert("RGB")
         imgDPI = 96
@@ -98,7 +101,13 @@ def dino_api(request):
 
         # API JSON
         sendJson = {}
-        sendJson['image'] = resultImgURL
-        sendJson['labels'] = labelJson
+        sendJson['version'] = '1.0'
+
+        simpleImageJson = {}
+        # simpleImageJson['imageUrl'] = resultImgURL
+        simpleImageJson['simpleText'] = {'text': 'asdflk'}
+
+        # sendJson['template'] = {'outputs': [simpleImageJson]}
+        sendJson['contents'] = [{'text': str(labelJson), 'type': 'text', 'forwardable': True}]
 
         return JsonResponse(sendJson)
