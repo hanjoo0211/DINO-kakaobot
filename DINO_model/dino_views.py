@@ -1,4 +1,3 @@
-from unittest import result
 from django.shortcuts import render
 from django.conf import settings
 from django.http import JsonResponse
@@ -18,6 +17,8 @@ import datasets.transforms as T
 import urllib
 import base64
 from io import BytesIO
+from dotenv import load_dotenv
+load_dotenv()
 
 # config 파일 경로
 model_config_path = "../DINO_model/config/DINO/DINO_4scale.py"
@@ -38,11 +39,10 @@ with open('../DINO_model/util/20class_plant_coco_id2name.json') as f:
 
 
 def dino_api(request):
+    utterance = json.loads(request.body)['userRequest']['utterance']
+    # try:
     if request.method == 'POST':
-        # print(json.loads(request.body)['userRequest']['utterance'])
-        imageURL = json.loads(request.body)['userRequest']['utterance']
-        # imageURL = request.body.decode()
-        # print(imageURL)
+        imageURL = utterance
         openedURL = urllib.request.urlopen(imageURL)
         with open('image.jpeg', 'wb') as f:
             f.write(openedURL.read())
@@ -85,29 +85,52 @@ def dino_api(request):
             'size': torch.Tensor([image.shape[1], image.shape[2]]),
             'box_label': box_label
         }
-        resultImg = vslzr.visualize(image, pred_dict, savedir=None, dpi=imgDPI, show_in_console=False, width=imgWidth, height=imgHeight)
-        buffered = BytesIO()
-        resultImg.save(buffered, format='PNG')
-        data64 = base64.b64encode(buffered.getvalue())
-        resultImgURL = u'data:image/png;base64,' + data64.decode('utf-8')
+        vslzr.visualize(image, pred_dict, savedir='./', dpi=imgDPI, show_in_console=False, width=imgWidth, height=imgHeight)
         print(box_label)
         print(pred_dict['boxes'])
 
         # etc 및 중복 버튼 제거
         labelJson = []
-        for label in box_label:
-            if label not in labelJson and label != 'etc':
-                labelJson.append(label)
+        dup = []
+        for i in range(len(box_label)):
+            if box_label[i] not in dup and box_label[i] != 'etc':
+                labelJson.append((box_label[i], str(scores[i])[9:11]))
+                dup.append(box_label[i])
+
+        # Result
+        result = ''
+        for l, s in labelJson:
+            result += l + ' ' + s + '%\n'
 
         # API JSON
         sendJson = {}
-        sendJson['version'] = '1.0'
+        sendJson['version'] = '2.0'
 
-        simpleImageJson = {}
-        # simpleImageJson['imageUrl'] = resultImgURL
-        simpleImageJson['simpleText'] = {'text': 'asdflk'}
+        imageIP = os.environ.get('IMAGE_IP')
+        simpleImage = {}
+        simpleImage['imageUrl'] = imageIP
+        simpleImage['altText'] = '이미지 로딩 실패'
+        simpleImageJson = {'simpleImage': simpleImage}
 
-        # sendJson['template'] = {'outputs': [simpleImageJson]}
-        sendJson['contents'] = [{'text': str(labelJson), 'type': 'text', 'forwardable': True}]
+        simpleTextJson = {}
+        simpleTextJson['simpleText'] = {'text': result[:-1]}
+
+        sendJson['template'] = {'outputs': [simpleImageJson, simpleTextJson]}
 
         return JsonResponse(sendJson)
+'''
+    except:
+        if request.method == 'POST':
+            # API JSON
+            sendJson = {}
+            sendJson['version'] = '2.0'
+
+            simpleImageJson = {}
+            # simpleImageJson['imageUrl'] = resultImgURL
+            simpleImageJson['simpleText'] = {'text': '식물 이미지를 올려주세요!'}
+
+            sendJson['template'] = {'outputs': [simpleImageJson]}
+            # sendJson['contents'] = [{'text': '식물 이미지를 올려주세요!', 'type': 'text', 'forwardable': True}]
+
+            return JsonResponse(sendJson)
+'''

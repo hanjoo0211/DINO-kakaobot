@@ -6,4 +6,5 @@ DINO_model/imagetest
 *.pyc
 __pycache__/
 dino_django/image.jpeg
+dino_django/annotated_image.png
 .env

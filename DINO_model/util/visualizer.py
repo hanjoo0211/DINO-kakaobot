@@ -48,23 +48,23 @@ class COCOVisualizer():
         pass
 
     # 이미지 시각화해서 전달
-    def visualize(self, img, tgt, caption=None, dpi=100, savedir=None, show_in_console=True, width=1920, height=1080):
+    def visualize(self, img, tgt, caption=None, dpi=120, savedir=None, show_in_console=True, width=1920, height=1080):
         plt.figure(dpi=dpi, figsize=[width/dpi, height/dpi])
         plt.rcParams['font.size'] = '5'
         ax = plt.gca()
         img = renorm(img).permute(1, 2, 0)
         ax.imshow(img)
         plt.axis('off')
+        plt.subplots_adjust(left=0, bottom=0, right=1, top=1, hspace=0, wspace=0)
         
         self.addtgt(tgt, height)
 
-        buf = io.BytesIO()
-        plt.savefig(buf, bbox_inches='tight', pad_inches=0)
-        buf.seek(0)
-        resultImg = Image.open(buf)
-
+        if savedir is not None:
+            savename = 'annotated_image.png'
+            # os.makedirs(os.path.dirname(savename), exist_ok=True)
+            plt.savefig(savename)
         plt.close()
-        return resultImg
+    
 
     def addtgt(self, tgt, height=1080):
         assert 'boxes' in tgt
