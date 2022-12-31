@@ -75,29 +75,3 @@ def index(request):
         'predicted_label': predicted_label,
     }
     return render(request, 'dino/index.html', context)
-
-def pinterest(request) :
-    return render(request, 'dino/pinterest.html')
-
-def new(request) :
-    return render(request,'dino/new.html')
-
-
-import urllib
-def api(request):
-    if request.method == 'POST':
-        # print(request.FILES)
-        # file = request.FILES['file']
-        imageURL = request.body.decode()
-        file = urllib.request.urlopen(imageURL)
-        img_bytes = file.read()
-        class_name = get_prediction(image_bytes=img_bytes)
-        print(class_name)
-
-        sendJson = {}
-        sendJson['image'] = imageURL
-        sendJson['scores'] = [0.5, 0.3, 0.1]
-        sendJson['labels'] = [class_name, class_name, class_name]
-        sendJson['boxes'] = [[0.5, 0.5, 0.5, 0.5], [0.2, 0.3, 0.4, 0.5], [0.1, 0.3, 0.5, 0.7]]
-
-        return JsonResponse(sendJson)
